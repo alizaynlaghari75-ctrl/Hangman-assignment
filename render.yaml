@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: wordsmith-hangman
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: hangman-data
+      mountPath: /app/data
+      sizeGB: 1

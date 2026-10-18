@@ -1,0 +1,43 @@
+{
+  "nature": [
+    "bank", "bark", "beach", "birch", "bloom", "brook", "cave", "clay", "cliff", "cloud",
+    "coast", "coral", "creek", "dawn", "dusk", "earth", "field", "flame", "flora",
+    "frost", "grass", "grove", "gulf", "hill", "isle", "lake", "land", "leaf", "marsh", "moss",
+    "ocean", "plain", "plant", "pond", "rain", "reef", "river", "rock", "root", "sand", "seed",
+    "shore", "snow", "soil", "stone", "storm", "water", "wave", "wind", "woods"
+  ],
+  "animals": [
+    "bear", "beak", "bird", "boar", "buck", "bull", "calf", "camel", "chick", "clam", "cobra",
+    "colt", "crab", "crow", "deer", "dove", "duck", "eagle", "fish", "fawn", "flea", "foal",
+    "frog", "gecko", "goat", "goose", "hare", "hawk", "heron", "horse", "lamb", "lion", "llama",
+    "lynx", "mole", "moose", "moth", "mouse", "mule", "newt", "otter", "panda", "pony", "puma",
+    "seal", "shark", "sheep", "snail", "snake", "swan", "toad", "tuna", "tusk", "vole",
+    "wasp", "whale", "wolf", "worm", "zebra"
+  ],
+  "movies": [
+    "actor", "award", "cast", "comic", "drama", "epic", "film", "frame", "genre", "hero",
+    "image", "movie", "music", "plot", "reel", "role", "scene", "shoot", "short", "show", "sound",
+    "stage", "stunt", "story", "theme", "title", "voice"
+  ],
+  "f1": [
+    "aero", "apex", "brake", "crash", "curve", "drive", "fast", "flag", "fuel", "gear", "grid",
+    "line", "motor", "pace", "pass", "pole", "race", "racer", "rally", "rival", "speed", "start",
+    "team", "test", "tire", "track", "turn", "tyre", "wheel", "wing"
+  ],
+  "football": [
+    "back", "ball", "boot", "card", "club", "coach", "cross", "draw", "fans", "field", "foul",
+    "game", "goal", "guard", "head", "kick", "line", "match", "pass", "pitch", "save", "score",
+    "shot", "side", "sport", "team", "throw", "wing"
+  ],
+  "cricket": [
+    "ball", "bowl", "catch", "cover", "drive", "duck", "field", "four", "glove", "match",
+    "over", "pace", "pads", "pitch", "runs", "score", "seam", "slip", "spin", "sweep", "team",
+    "wide"
+  ],
+  "academic": [
+    "area", "atom", "book", "brain", "class", "data", "date", "essay", "exam", "fact", "field",
+    "focus", "form", "grade", "graph", "group", "guide", "idea", "index", "learn", "level", "logic",
+    "math", "mean", "note", "order", "page", "paper", "point", "read", "reply", "rule", "shape",
+    "skill", "solve", "study", "test", "text", "topic", "unit", "value", "verb", "write"
+  ]
+}

@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f3ed">
+  <title>Hangman — a word worth finding</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #19251f;
+      --muted: #758078;
+      --paper: #f6f3ed;
+      --card: #fffefa;
+      --line: #e6e5dc;
+      --green: #28684d;
+      --green-dark: #1b503a;
+      --green-pale: #e8f1e9;
+      --gold: #d79d35;
+      --red: #bc5548;
+      --shadow: 0 18px 60px rgba(38, 51, 42, .075);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(220, 231, 216, .6), transparent 35rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(40, 104, 77, .35);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1100px, calc(100% - 40px)); margin: 0 auto; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 27px 0 35px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--green);
+      color: white;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .brand-name { font-size: 16px; font-weight: 760; letter-spacing: -.03em; }
+    .brand-note { margin-top: 2px; color: var(--muted); font-size: 11px; letter-spacing: .11em; text-transform: uppercase; }
+    .dictionary-count {
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      padding: 9px 13px;
+      background: rgba(255, 254, 250, .72);
+      color: #59665d;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .intro { margin-bottom: 25px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(30px, 5vw, 43px); letter-spacing: -.055em; line-height: 1.08; }
+    .intro p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(270px, .9fr); gap: 19px; align-items: start; padding-bottom: 32px; }
+    .card { border: 1px solid rgba(220, 222, 212, .8); border-radius: 22px; background: var(--card); box-shadow: var(--shadow); }
+    .game-card { overflow: hidden; }
+    .game-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 19px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .difficulty-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .levels { display: flex; gap: 5px; }
+    .level {
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 11px;
+      background: transparent;
+      color: #69756d;
+      font-size: 12px;
+      font-weight: 700;
+      transition: background .15s, color .15s;
+    }
+    .level[aria-pressed="true"] { background: var(--green-pale); color: var(--green-dark); }
+    .topic-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .topic-label { font-size: 12px; font-weight: 730; }
+    .topic-caption { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 500; }
+    .topic-select {
+      min-width: 155px;
+      border: 1px solid #e3e6dd;
+      border-radius: 9px;
+      padding: 9px 30px 9px 11px;
+      background: #fff;
+      color: #45534a;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .topic-select:disabled { background: #f5f4ef; color: #8a938c; cursor: not-allowed; }
+    .new-game {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 15px;
+      background: var(--green);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 760;
+      transition: background .15s, transform .15s;
+    }
+    .new-game:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .game-body { padding: 23px 23px 21px; }
+    .play-area { display: grid; grid-template-columns: 142px 1fr; align-items: center; gap: 24px; min-height: 170px; }
+    .gallows {
+      width: 142px;
+      height: 160px;
+      color: #829087;
+    }
+    .gallows line, .gallows circle, .gallows path { vector-effect: non-scaling-stroke; }
+    .figure-part { opacity: 0; transition: opacity .2s; }
+    .figure-part.visible { opacity: 1; }
+    .word-zone { min-width: 0; }
+    .word-hint { margin: 0 0 18px; color: var(--muted); font-size: 12px; }
+    .word { display: flex; flex-wrap: wrap; gap: 8px; }
+    .letter-slot {
+      display: grid;
+      width: 34px;
+      height: 43px;
+      place-items: center;
+      border-bottom: 2px solid #9da89f;
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+    .letter-slot.revealed { border-color: var(--green); }
+    .game-status { min-height: 20px; margin: 15px 0 0; color: var(--green); font-size: 13px; font-weight: 650; }
+    .game-status.error { color: var(--red); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 16px 0 23px; }
+    .stat {
+      min-height: 64px;
+      padding: 12px 13px;
+      border: 1px solid #eeeee7;
+      border-radius: 12px;
+      background: #fbfaf6;
+    }
+    .stat-label { display: block; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .stat-value { display: block; margin-top: 5px; font-size: 17px; font-weight: 760; }
+    .stat-value small { color: var(--muted); font-size: 11px; font-weight: 550; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+    .section-head h2 { margin: 0; font-size: 13px; letter-spacing: -.01em; }
+    .guessed-caption { color: var(--muted); font-size: 11px; }
+    .keyboard { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 6px; }
+    .key {
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #e9eae2;
+      border-radius: 8px;
+      background: white;
+      color: #45534a;
+      font-size: 12px;
+      font-weight: 730;
+      text-transform: uppercase;
+      transition: background .15s, color .15s, transform .15s;
+    }
+    .key:hover:not(:disabled) { transform: translateY(-1px); border-color: #b7cbbb; }
+    .key:disabled { cursor: default; opacity: .48; }
+    .key.correct { border-color: #c5dec9; background: var(--green-pale); color: var(--green-dark); opacity: 1; }
+    .key.incorrect { border-color: #efd5d0; background: #faeeeb; color: #a44f43; opacity: .78; }
+    .keyboard-note { margin: 12px 0 0; color: var(--muted); font-size: 11px; }
+
+    .side-card { overflow: hidden; }
+    .leader-head { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); }
+    .leader-title { display: flex; align-items: center; justify-content: space-between; }
+    .leader-title h2 { margin: 0; font-size: 18px; letter-spacing: -.035em; }
+    .top-label { border-radius: 99px; padding: 5px 8px; background: #f5f0df; color: #93702c; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+    .leader-subtitle { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+    .leaderboard { padding: 4px 16px 13px; }
+    .leader-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 9px; min-height: 48px; border-bottom: 1px solid #f0f0ea; }
+    .leader-row:last-child { border-bottom: 0; }
+    .rank { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: #f3f2ed; color: #68736b; font-size: 10px; font-weight: 800; }
+    .rank.gold { background: #f8e8b8; color: #906715; }
+    .rank.silver { background: #e9ecea; color: #59635d; }
+    .rank.bronze { background: #f3e1d0; color: #98623c; }
+    .player { overflow: hidden; color: #46534a; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .player.podium { font-size: 15px; font-weight: 780; color: var(--ink); }
+    .score { color: var(--green-dark); font-size: 12px; font-weight: 800; }
+    .empty-board { padding: 22px 8px; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: center; }
+    .leader-error { margin: 0; padding: 13px 8px; color: var(--red); font-size: 12px; }
+    .rules { margin-top: 16px; padding: 18px 19px; box-shadow: none; }
+    .rules h2 { margin: 0 0 12px; font-size: 13px; }
+    .rule-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid #f0f0ea; color: #59655d; font-size: 11px; }
+    .rule-row strong { color: var(--ink); white-space: nowrap; }
+    .formula { margin: 11px 0 0; padding: 11px; border-radius: 10px; background: #f3f6f0; color: #526259; font-size: 11px; line-height: 1.55; }
+    .formula strong { color: var(--green-dark); }
+    footer { padding: 0 0 28px; color: #879087; font-size: 10px; text-align: center; }
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 5;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(25, 37, 31, .42);
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop[hidden] { display: none; }
+    .result-modal { width: min(420px, 100%); padding: 27px; border-radius: 20px; background: var(--card); box-shadow: 0 25px 90px rgba(15, 30, 20, .25); }
+    .result-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 14px; background: var(--green-pale); color: var(--green); font-size: 20px; font-weight: 800; }
+    .result-modal h2 { margin: 17px 0 6px; font-size: 24px; letter-spacing: -.04em; }
+    .result-copy { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .result-score { display: inline-block; margin: 14px 0 20px; color: var(--green-dark); font-size: 23px; font-weight: 800; }
+    .name-label { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 750; }
+    .name-input { width: 100%; border: 1px solid #dfe3da; border-radius: 10px; padding: 12px; background: #fff; color: var(--ink); }
+    .modal-error { min-height: 18px; margin: 7px 0 0; color: var(--red); font-size: 11px; }
+    .save-score { width: 100%; margin-top: 5px; }
+    .loading { opacity: .6; pointer-events: none; }
+
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      .side-column { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+      .rules { margin-top: 0; }
+      .leaderboard { max-height: 400px; overflow: auto; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 24px, 460px); }
+      header { padding: 16px 0 27px; }
+      .dictionary-count { max-width: 140px; font-size: 10px; text-align: center; }
+      .game-top { align-items: flex-end; padding: 16px; }
+      .levels { gap: 0; }
+      .level { padding: 8px 7px; font-size: 11px; }
+      .new-game { padding: 10px 11px; font-size: 11px; }
+      .game-body { padding: 17px 15px 18px; }
+      .topic-control { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .topic-select { width: 100%; }
+      .play-area { grid-template-columns: 105px 1fr; gap: 12px; min-height: 145px; }
+      .gallows { width: 105px; height: 135px; }
+      .word { gap: 5px; }
+      .letter-slot { width: 25px; height: 37px; font-size: 19px; }
+      .stats { gap: 6px; }
+      .stat { padding: 10px 8px; }
+      .stat-label { font-size: 9px; letter-spacing: .04em; }
+      .stat-value { font-size: 15px; }
+      .keyboard { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; }
+      .key { aspect-ratio: 1.22 / 1; }
+      .side-column { grid-template-columns: 1fr; }
+      .rules { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">H</div>
+        <div><div class="brand-name">Wordsmith</div><div class="brand-note">Hangman club</div></div>
+      </div>
+      <div class="dictionary-count" id="dictionaryCount">Loading dictionary…</div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <p class="eyebrow">A little wordplay</p>
+        <h1>Find the word.<br>Keep your cool.</h1>
+        <p>Guess one letter at a time. How far can your vocabulary take you?</p>
+      </section>
+
+      <div class="layout">
+        <section class="card game-card" aria-label="Hangman game">
+          <div class="game-top">
+            <div>
+              <span class="difficulty-label">Choose your level</span>
+              <div class="levels" role="group" aria-label="Difficulty">
+                <button class="level" type="button" data-level="easy" aria-pressed="true">Easy</button>
+                <button class="level" type="button" data-level="medium" aria-pressed="false">Medium</button>
+                <button class="level" type="button" data-level="hard" aria-pressed="false">Hard</button>
+              </div>
+            </div>
+            <button class="new-game" id="newGame" type="button">↻ &nbsp;New game</button>
+          </div>
+          <div class="game-body" id="gameBody">
+            <div class="topic-control">
+              <label class="topic-label" for="topicSelect">
+                Easy word topic
+                <span class="topic-caption" id="topicCaption">Pick a theme for your next game.</span>
+              </label>
+              <select class="topic-select" id="topicSelect">
+                <option value="any">Mix all topics</option>
+                <option value="nature">Nature</option>
+                <option value="animals">Animals</option>
+                <option value="movies">Movies</option>
+                <option value="f1">F1</option>
+                <option value="football">Football</option>
+                <option value="cricket">Cricket</option>
+                <option value="academic">Academic</option>
+              </select>
+            </div>
+            <div class="play-area">
+              <svg class="gallows" viewBox="0 0 150 170" role="img" aria-label="Hangman drawing">
+                <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 154h91M38 154V18h67v18" />
+                  <circle class="figure-part" data-part="1" cx="105" cy="50" r="15" />
+                  <path class="figure-part" data-part="2" d="M105 65v39" />
+                  <path class="figure-part" data-part="3" d="m105 75-22 20" />
+                  <path class="figure-part" data-part="4" d="m105 75 22 20" />
+                  <path class="figure-part" data-part="5" d="m105 104-20 29" />
+                  <path class="figure-part" data-part="6" d="m105 104 20 29" />
+                </g>
+              </svg>
+              <div class="word-zone">
+                <p class="word-hint" id="wordHint">Your word is ready when you are.</p>
+                <div class="word" id="word" aria-label="Hidden word"></div>
+                <p class="game-status" id="gameStatus" aria-live="polite">Starting a new game…</p>
+              </div>
+            </div>
+            <div class="stats" aria-label="Game statistics">
+              <div class="stat"><span class="stat-label">Attempts left</span><span class="stat-value" id="attempts">— <small>/ 6</small></span></div>
+              <div class="stat"><span class="stat-label">Current score</span><span class="stat-value" id="score">—</span></div>
+              <div class="stat"><span class="stat-label">Letters tried</span><span class="stat-value" id="guessCount">0</span></div>
+            </div>
+            <div class="section-head">
+              <h2>Pick a letter</h2>
+              <span class="guessed-caption" id="guessedCaption">No guesses yet</span>
+            </div>
+            <div class="keyboard" id="keyboard" role="group" aria-label="Letter guesses"></div>
+            <p class="keyboard-note">You can also use your keyboard.</p>
+          </div>
+        </section>
+
+        <aside class="side-column">
+          <section class="card side-card" aria-labelledby="leaderTitle">
+            <div class="leader-head">
+              <div class="leader-title"><h2 id="leaderTitle">Leaderboard</h2><span class="top-label">TOP 50</span></div>
+              <p class="leader-subtitle">The sharpest minds, ranked.</p>
+            </div>
+            <div class="leaderboard" id="leaderboard" aria-live="polite">
+              <div class="empty-board">Loading the leaderboard…</div>
+            </div>
+          </section>
+          <section class="card rules" aria-labelledby="rulesTitle">
+            <h2 id="rulesTitle">How it works</h2>
+            <div class="rule-row"><span>Easy</span><strong>4–5 letters</strong></div>
+            <div class="rule-row"><span>Medium</span><strong>6–8 letters</strong></div>
+            <div class="rule-row"><span>Hard</span><strong>9–12 letters</strong></div>
+            <p class="formula"><strong>Scoring:</strong> On a win, (10 × distinct correct letters + 10 × attempts left) × level multiplier. Multipliers: Easy ×1, Medium ×1.5, Hard ×2. A loss scores 0. Duplicate guesses change nothing.</p>
+          </section>
+        </aside>
+      </div>
+    </main>
+    <footer>Words are selected from a server-side SQLite dictionary. Scores are saved to the shared leaderboard.</footer>
+  </div>
+
+  <div class="modal-backdrop" id="resultBackdrop" hidden>
+    <form class="result-modal" id="scoreForm" aria-labelledby="resultTitle">
+      <div class="result-icon" id="resultIcon" aria-hidden="true">✓</div>
+      <h2 id="resultTitle">You found it!</h2>
+      <p class="result-copy" id="resultCopy">Your score is ready for the leaderboard.</p>
+      <span class="result-score" id="resultScore">0 points</span>
+      <label class="name-label" for="playerName">Your name</label>
+      <input class="name-input" id="playerName" name="playerName" maxlength="40" autocomplete="name" required placeholder="Enter a name">
+      <p class="modal-error" id="modalError" aria-live="polite"></p>
+      <button class="new-game save-score" id="saveScore" type="submit">Save my score</button>
+    </form>
+  </div>
+
+  <script>
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    const levels = { easy: 1, medium: 1.5, hard: 2 };
+    const parts = [...document.querySelectorAll(".figure-part")];
+    const keyboard = document.getElementById("keyboard");
+    let game = null;
+    let selectedLevel = "easy";
+    let selectedTopic = "any";
+    let submittingGuess = false;
+
+    function showError(message) {
+      const status = document.getElementById("gameStatus");
+      status.textContent = message;
+      status.classList.add("error");
+    }
+
+    async function request(path, options = {}) {
+      const response = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+      return data;
+    }
+
+    function makeKeyboard() {
+      keyboard.replaceChildren();
+      for (const letter of letters) {
+        const button = document.createElement("button");
+        button.className = "key";
+        button.type = "button";
+        button.textContent = letter;
+        button.setAttribute("aria-label", `Guess ${letter}`);
+        button.addEventListener("click", () => guess(letter));
+        keyboard.append(button);
+      }
+    }
+
+    function renderGame() {
+      if (!game) return;
+      const word = document.getElementById("word");
+      word.replaceChildren();
+      for (const character of game.masked_word) {
+        const slot = document.createElement("span");
+        slot.className = `letter-slot${character !== "_" ? " revealed" : ""}`;
+        slot.textContent = character === "_" ? "" : character;
+        word.append(slot);
+      }
+      document.getElementById("attempts").innerHTML = `${game.remaining_attempts} <small>/ 6</small>`;
+      document.getElementById("score").textContent = `${game.current_score} pts`;
+      document.getElementById("guessCount").textContent = game.guesses.length;
+      document.getElementById("guessedCaption").textContent = game.guesses.length
+        ? `Tried: ${game.guesses.join(", ").toUpperCase()}`
+        : "No guesses yet";
+      document.getElementById("wordHint").textContent = game.status === "active"
+        ? game.difficulty === "easy"
+          ? `A ${game.word_length}-letter ${game.topic_label} word · Easy`
+          : `A ${game.word_length}-letter ${game.difficulty} word`
+        : game.status === "won" ? "Every letter found!" : "Better luck on the next one.";
+      parts.forEach((part) => part.classList.toggle("visible", Number(part.dataset.part) <= game.wrong_guesses));
+      keyboard.querySelectorAll(".key").forEach((button) => {
+        const letter = button.textContent;
+        const used = game.guesses.includes(letter);
+        button.disabled = used || game.status !== "active";
+        button.classList.toggle("correct", used && game.correct_guesses.includes(letter));
+        button.classList.toggle("incorrect", used && !game.correct_guesses.includes(letter));
+      });
+      const status = document.getElementById("gameStatus");
+      status.classList.remove("error");
+      if (game.status === "active") status.textContent = "Choose a letter to make your guess.";
+      if (game.status === "won") status.textContent = "Brilliant — you guessed the word!";
+      if (game.status === "lost") status.textContent = `The word was ${game.word.toUpperCase()}.`;
+    }
+
+    async function startGame() {
+      const body = document.getElementById("gameBody");
+      body.classList.add("loading");
+      document.getElementById("newGame").textContent = "↻  New game";
+      document.getElementById("gameStatus").classList.remove("error");
+      document.getElementById("gameStatus").textContent = "Starting a new game…";
+      try {
+        game = await request("/api/games", {
+          method: "POST",
+          body: JSON.stringify({
+            difficulty: selectedLevel,
+            topic: selectedLevel === "easy" ? selectedTopic : "any"
+          })
+        });
+        document.getElementById("resultBackdrop").hidden = true;
+        renderGame();
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        body.classList.remove("loading");
+      }
+    }
+
+    async function guess(letter) {
+      if (!game || game.status !== "active" || submittingGuess) return;
+      submittingGuess = true;
+      try {
+        game = await request(`/api/games/${encodeURIComponent(game.id)}/guess`, {
+          method: "POST",
+          body: JSON.stringify({ letter })
+        });
+        renderGame();
+        if (game.status !== "active") openResult();
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        submittingGuess = false;
+      }
+    }
+
+    function openResult() {
+      const won = game.status === "won";
+      document.getElementById("resultIcon").textContent = won ? "✓" : "↻";
+      document.getElementById("resultTitle").textContent = won ? "You found it!" : "Not this time.";
+      document.getElementById("resultCopy").textContent = won
+        ? `The word was ${game.word.toUpperCase()}. Save your score to the leaderboard.`
+        : `The word was ${game.word.toUpperCase()}. Save this completed game to the leaderboard.`;
+      document.getElementById("resultScore").textContent = `${game.final_score} points`;
+      document.getElementById("modalError").textContent = "";
+      document.getElementById("playerName").value = "";
+      document.getElementById("resultBackdrop").hidden = false;
+      document.getElementById("playerName").focus();
+    }
+
+    async function refreshLeaderboard() {
+      const container = document.getElementById("leaderboard");
+      try {
+        const data = await request("/api/leaderboard");
+        const count = new Intl.NumberFormat().format(data.vocabulary_count);
+        document.getElementById("dictionaryCount").textContent = `${count} words in the dictionary`;
+        container.replaceChildren();
+        if (!data.scores.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty-board";
+          empty.textContent = "No scores yet. Claim the first spot!";
+          container.append(empty);
+          return;
+        }
+        data.scores.forEach((score, index) => {
+          const row = document.createElement("div");
+          row.className = "leader-row";
+          const rank = document.createElement("span");
+          rank.className = `rank${index === 0 ? " gold" : index === 1 ? " silver" : index === 2 ? " bronze" : ""}`;
+          rank.textContent = index < 3 ? ["1", "2", "3"][index] : String(index + 1);
+          const player = document.createElement("span");
+          player.className = `player${index < 3 ? " podium" : ""}`;
+          player.textContent = score.player_name;
+          player.title = score.player_name;
+          const points = document.createElement("span");
+          points.className = "score";
+          points.textContent = `${score.score} pts`;
+          row.append(rank, player, points);
+          container.append(row);
+        });
+      } catch (error) {
+        container.replaceChildren();
+        const failure = document.createElement("p");
+        failure.className = "leader-error";
+        failure.textContent = `Leaderboard unavailable: ${error.message}`;
+        container.append(failure);
+      }
+    }
+
+    document.getElementById("scoreForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const nameInput = document.getElementById("playerName");
+      const saveButton = document.getElementById("saveScore");
+      const errorMessage = document.getElementById("modalError");
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving…";
+      errorMessage.textContent = "";
+      try {
+        await request(`/api/games/${encodeURIComponent(game.id)}/score`, {
+          method: "POST",
+          body: JSON.stringify({ player_name: nameInput.value })
+        });
+        document.getElementById("resultBackdrop").hidden = true;
+        await refreshLeaderboard();
+        document.getElementById("gameStatus").textContent = "Score saved. Ready for another round?";
+        document.getElementById("newGame").textContent = "↻  Play again";
+      } catch (error) {
+        errorMessage.textContent = error.message;
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = "Save my score";
+      }
+    });
+
+    document.getElementById("newGame").addEventListener("click", startGame);
+    document.getElementById("topicSelect").addEventListener("change", (event) => {
+      selectedTopic = event.target.value;
+    });
+    document.querySelectorAll(".level").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedLevel = button.dataset.level;
+        document.querySelectorAll(".level").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        const topicsEnabled = selectedLevel === "easy";
+        document.getElementById("topicSelect").disabled = !topicsEnabled;
+        document.getElementById("topicCaption").textContent = topicsEnabled
+          ? "Pick a theme for your next game."
+          : "Themes are available in Easy mode.";
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (document.activeElement === document.getElementById("playerName")) return;
+      const letter = event.key.toLowerCase();
+      if (/^[a-z]$/.test(letter)) guess(letter);
+    });
+
+    makeKeyboard();
+    document.getElementById("topicSelect").disabled = selectedLevel !== "easy";
+    document.getElementById("topicCaption").textContent = selectedLevel === "easy"
+      ? "Pick a theme for your next game."
+      : "Themes are available in Easy mode.";
+    refreshLeaderboard();
+    startGame();
+  </script>
+</body>
+</html>
